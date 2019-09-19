@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+    * {
+      font-size: 50px;
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <input type="text" id="editText" placeholder="输入内容" />
+  </div>
+  <div>
+    <button id="showBtn">显示native弹窗</button>
+  </div>
+  <div>
+      <button id="showBtn2">获取native输入</button>
+    </div>
+  <script>
+    let id = 1;
+    const callbackMap = {};
+    
+    window.JSSDK = {
+      getNativeEditTextValue(callback) {
+        console.log(30, callback);
+        const callbackId = id++;
+        callbackMap[callbackId] = callback;
+        window.NativeBridge.getNativeEditTextValue(callbackId);
+      },
+      receiveMessage(callbackId, value) {
+        if (callbackMap[callbackId]) {
+          callbackMap[callbackId](value);
+        }
+      },
+      getWebEditTextValue(callbackId) {
+        const editText = document.querySelector('#editText');
+        const value = editText.value;
+        NativeBridge.receiveMessage(callbackId, value);
+      }
+    }
+
+    function showWebDialog(text) {
+      window.alert(text);
+    }
+
+    function showNativeDialog(text) {
+      // 这个alert弹窗是会被原生应用所拦截的，就像拦截http请求一样
+      // window.alert('jsbridge://showNativeDialog?text=' + text);
+
+      // 注入js api的方式
+      window.NativeBridge.showNativeDialog(text);
+    }
+
+    document.addEventListener('DOMContentLoaded', e => {
+      const editText = document.querySelector('#editText');
+      const showBtn = document.querySelector('#showBtn');
+      const showBtn2 = document.querySelector('#showBtn2');
+
+      showBtn.addEventListener('click', e => {
+        const inputValue = editText.value;
+        showNativeDialog(inputValue);
+      });
+
+      showBtn2.addEventListener('click', e => {
+        console.log(55, window.JSSDK);
+        window.JSSDK.getNativeEditTextValue(value => window.alert('native 输入值： ' + value));
+      });
+    })
+  </script>
+</body>
+</html>
